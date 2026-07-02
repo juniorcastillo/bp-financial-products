@@ -1,0 +1,32 @@
+@if (notifications.notification(); as notification) {
+  <div class="toast-container" aria-live="polite" aria-atomic="true">
+    <section
+      class="toast"
+      [class.toast--success]="notification.type === 'success'"
+      [class.toast--error]="notification.type === 'error'"
+      [class.toast--info]="notification.type === 'info'"
+      role="status"
+    >
+      <div class="toast__icon" aria-hidden="true">
+        @if (notification.type === 'success') {
+          ✓
+        } @else if (notification.type === 'error') {
+          !
+        } @else {
+          i
+        }
+      </div>
+
+      <p class="toast__message">{{ notification.message }}</p>
+
+      <button
+        class="toast__close"
+        type="button"
+        aria-label="Cerrar notificación"
+        (click)="close()"
+      >
+        ×
+      </button>
+    </section>
+  </div>
+}

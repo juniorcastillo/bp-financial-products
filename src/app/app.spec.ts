@@ -1,0 +1,30 @@
+import { provideRouter } from '@angular/router';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { App } from './app';
+
+describe('App', () => {
+  let fixture: ComponentFixture<App>;
+  let component: App;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [App],
+      providers: [provideRouter([])],
+    }).compileComponents();
+
+    fixture = TestBed.createComponent(App);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('debe crear la aplicación', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('debe renderizar el router outlet', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
+  });
+});

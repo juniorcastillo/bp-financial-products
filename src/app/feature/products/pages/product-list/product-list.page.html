@@ -1,0 +1,322 @@
+<main class="products-page">
+  <section class="products-container">
+    <div class="products-toolbar">
+      <label class="search-field">
+        <span class="sr-only">Buscar producto financiero</span>
+
+        <input
+          type="search"
+          placeholder="Buscar producto..."
+          [value]="searchTerm()"
+          (input)="onSearch($any($event.target).value)"
+        />
+      </label>
+
+      <a class="primary-button primary-button--link" routerLink="/products/new">
+        Agregar producto
+      </a>
+    </div>
+
+    @if (isLoading()) {
+      <section
+        class="table-card table-card--loading"
+        aria-label="Cargando productos financieros"
+      >
+        @for (row of [1, 2, 3, 4, 5]; track row) {
+          <div class="skeleton-row">
+            <span class="skeleton skeleton--logo"></span>
+            <span class="skeleton"></span>
+            <span class="skeleton"></span>
+            <span class="skeleton"></span>
+            <span class="skeleton"></span>
+            <span class="skeleton skeleton--actions"></span>
+          </div>
+        }
+      </section>
+    } @else if (errorMessage()) {
+      <section class="feedback-card feedback-card--error">
+        <h1>No se pudieron cargar los productos</h1>
+        <p>{{ errorMessage() }}</p>
+
+        <button
+          class="secondary-button"
+          type="button"
+          (click)="loadProducts()"
+        >
+          Reintentar
+        </button>
+      </section>
+    } @else {
+      <section class="table-card">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Logo</th>
+                <th scope="col">Nombre del producto</th>
+
+                <th scope="col">
+                  <span class="table-heading-with-info">
+                    Descripción
+
+                    <span class="info-tooltip" tabindex="0">
+                      <span class="info-tooltip__icon" aria-hidden="true">
+                        !
+                      </span>
+
+                      <span class="info-tooltip__content" role="tooltip">
+                        Describe las características principales y beneficios
+                        del producto financiero.
+                      </span>
+                    </span>
+                  </span>
+                </th>
+
+                <th scope="col">
+                  <span class="table-heading-with-info">
+                    Fecha de liberación
+
+                    <span class="info-tooltip" tabindex="0">
+                      <span class="info-tooltip__icon" aria-hidden="true">
+                        !
+                      </span>
+
+                      <span class="info-tooltip__content" role="tooltip">
+                        Fecha a partir de la cual el producto está disponible
+                        para los clientes.
+                      </span>
+                    </span>
+                  </span>
+                </th>
+
+                <th scope="col">
+                  <span class="table-heading-with-info">
+                    Fecha de revisión
+
+                    <span class="info-tooltip" tabindex="0">
+                      <span class="info-tooltip__icon" aria-hidden="true">
+                        !
+                      </span>
+
+                      <span class="info-tooltip__content" role="tooltip">
+                        Fecha programada para revisar o actualizar la
+                        información del producto.
+                      </span>
+                    </span>
+                  </span>
+                </th>
+
+                <th scope="col" class="actions-column">
+                  <span class="sr-only">Acciones</span>
+                </th>
+              </tr>
+            </thead>
+
+            <tbody>
+              @if (paginatedProducts().length > 0) {
+                @for (product of paginatedProducts(); track product.id) {
+                  <tr>
+                    <td>
+                      <div class="product-logo-box">
+                        <img
+                          class="product-logo"
+                          [src]="product.logo"
+                          [alt]="'Logo de ' + product.name"
+                          (error)="$any($event.target).style.display = 'none'"
+                        />
+                      </div>
+                    </td>
+
+                    <td>
+                      <span class="product-name" [title]="product.name">
+                        {{ product.name }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span
+                        class="product-description"
+                        [title]="product.description"
+                      >
+                        {{ product.description }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span class="date-value">
+                        {{ product.date_release | date: 'dd/MM/yyyy':'UTC' }}
+                      </span>
+                    </td>
+
+                    <td>
+                      <span class="date-value">
+                        {{ product.date_revision | date: 'dd/MM/yyyy':'UTC' }}
+                      </span>
+                    </td>
+
+                    <td class="actions-cell">
+                      <div class="actions-menu">
+                        <button
+                          class="actions-menu__trigger"
+                          type="button"
+                          [attr.aria-label]="'Acciones para ' + product.name"
+                          [attr.aria-expanded]="openMenuProductId() === product.id"
+                          (click)="toggleActionsMenu(product.id)"
+                        >
+                          ⋮
+                        </button>
+
+                        @if (openMenuProductId() === product.id) {
+                          <div class="actions-menu__content">
+                            <a
+                              class="actions-menu__link"
+                              [routerLink]="['/products', product.id, 'edit']"
+                              (click)="openMenuProductId.set(null)"
+                            >
+                              Editar
+                            </a>
+
+                            <button
+                              class="actions-menu__delete"
+                              type="button"
+                              (click)="openDeleteModal(product)"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              } @else {
+                <tr>
+                  <td colspan="6">
+                    <div class="empty-table">
+                      @if (searchTerm()) {
+                        <strong>No encontramos coincidencias.</strong>
+                        <span>
+                          No hay productos que coincidan con
+                          “{{ searchTerm() }}”.
+                        </span>
+                      } @else {
+                        <strong>No hay productos registrados.</strong>
+                        <span>
+                          Agrega el primer producto financiero para comenzar.
+                        </span>
+                      }
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <footer class="table-footer">
+          <span>
+            {{ filteredProducts().length }}
+            {{ filteredProducts().length === 1 ? 'resultado' : 'resultados' }}
+          </span>
+
+          <div class="pagination">
+            <button
+              type="button"
+              aria-label="Ir a la página anterior"
+              [disabled]="currentPage() === 1"
+              (click)="goToPreviousPage()"
+            >
+              ‹
+            </button>
+
+            <span
+              class="pagination__summary"
+              [attr.aria-label]="'Página ' + currentPage() + ' de ' + totalPages()"
+            >
+              Página {{ currentPage() }} de {{ totalPages() }}
+            </span>
+
+            <button
+              type="button"
+              aria-label="Ir a la página siguiente"
+              [disabled]="currentPage() === totalPages()"
+              (click)="goToNextPage()"
+            >
+              ›
+            </button>
+
+            <label class="page-size-select">
+              <span class="sr-only">Productos por página</span>
+
+              <select
+                [value]="pageSize()"
+                (change)="onPageSizeChange($any($event.target).value)"
+              >
+                <option value="5">5 por página</option>
+                <option value="10">10 por página</option>
+                <option value="20">20 por página</option>
+              </select>
+            </label>
+          </div>
+        </footer>
+      </section>
+    }
+  </section>
+
+  @if (isDeleteModalOpen()) {
+    <div
+      class="delete-modal-backdrop"
+      role="presentation"
+      (click)="closeDeleteModal()"
+    >
+      <section
+        class="delete-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="delete-modal-title"
+        aria-describedby="delete-modal-description"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="delete-modal__content">
+          <p class="delete-modal__eyebrow">Confirmar eliminación</p>
+
+          <h2 id="delete-modal-title">
+            ¿Deseas eliminar este producto?
+          </h2>
+
+          <p id="delete-modal-description">
+            Se eliminará el producto
+            <strong>{{ productPendingDeletion()?.name }}</strong>.
+            Esta acción no se puede deshacer.
+          </p>
+
+          @if (deleteError()) {
+            <p class="delete-modal__error" role="alert">
+              {{ deleteError() }}
+            </p>
+          }
+        </div>
+
+        <div class="delete-modal__actions">
+          <button
+            class="delete-modal__cancel"
+            type="button"
+            [disabled]="isDeleting()"
+            (click)="closeDeleteModal()"
+          >
+            Cancelar
+          </button>
+
+          <button
+            class="delete-modal__confirm"
+            type="button"
+            [disabled]="isDeleting()"
+            (click)="confirmDelete()"
+          >
+            {{ isDeleting() ? 'Eliminando...' : 'Sí, eliminar' }}
+          </button>
+        </div>
+      </section>
+    </div>
+  }
+</main>

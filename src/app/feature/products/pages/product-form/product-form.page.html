@@ -1,0 +1,212 @@
+<main class="form-page">
+  <section class="form-card">
+    <div class="form-card__heading">
+      <div>
+        <p class="form-card__eyebrow">Productos financieros</p>
+        <h1>{{ pageTitle() }}</h1>
+      </div>
+
+      <a routerLink="/products">Volver al listado</a>
+    </div>
+
+    @if (isLoadingProduct()) {
+      <section class="form-feedback">
+        Cargando información del producto...
+      </section>
+    } @else if (productNotFound()) {
+      <section class="form-feedback form-feedback--error">
+        <h2>Producto no encontrado</h2>
+        <p>El producto que intentas editar no existe o fue eliminado.</p>
+
+        <a class="secondary-button form-feedback__button" routerLink="/products">
+          Volver al listado
+        </a>
+      </section>
+    } @else {
+      @if (serverError()) {
+        <div class="server-error" role="alert">
+          {{ serverError() }}
+        </div>
+      }
+
+      <form [formGroup]="productForm" (ngSubmit)="onSubmit()" novalidate>
+        <div class="form-grid">
+          <div class="field">
+            <label for="id">ID</label>
+
+            <input
+              id="id"
+              type="text"
+              formControlName="id"
+              placeholder="Identificador único"
+              (blur)="checkIdAvailability()"
+              (change)="normalizeId()"
+            />
+
+            @if (isEditMode()) {
+              <small class="field__hint">
+                El identificador no puede modificarse.
+              </small>
+            } @else if (isCheckingId()) {
+              <small class="field__hint">
+                Verificando disponibilidad...
+              </small>
+            } @else if (idControl.touched && idControl.hasError('required')) {
+              <small class="field__error">El ID es requerido.</small>
+            } @else if (idControl.touched && idControl.hasError('pattern')) {
+              <small class="field__error">
+                Usa letras minúsculas, números y guiones.
+              </small>
+            } @else if (idControl.touched && idControl.hasError('maxlength')) {
+              <small class="field__error">
+                El ID debe tener máximo 100 caracteres.
+              </small>
+            } @else if (idControl.touched && idControl.hasError('idTaken')) {
+              <small class="field__error">Este ID ya está registrado.</small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="name">Nombre</label>
+
+            <input
+              id="name"
+              type="text"
+              formControlName="name"
+              maxlength="100"
+              placeholder="Ej. Tarjeta de Crédito"
+            />
+
+            @if (nameControl.touched && nameControl.hasError('required')) {
+              <small class="field__error">El nombre es requerido.</small>
+            } @else if (nameControl.touched && nameControl.hasError('blank')) {
+              <small class="field__error">
+                El nombre no puede contener solo espacios.
+              </small>
+            } @else if (nameControl.touched && nameControl.hasError('minlength')) {
+              <small class="field__error">
+                El nombre debe tener mínimo 5 caracteres.
+              </small>
+            } @else if (nameControl.touched && nameControl.hasError('maxlength')) {
+              <small class="field__error">
+                El nombre debe tener máximo 100 caracteres.
+              </small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="description">Descripción</label>
+
+            <textarea
+              id="description"
+              rows="4"
+              formControlName="description"
+              maxlength="200"
+              placeholder="Describe el producto financiero"
+            ></textarea>
+
+            @if (descriptionControl.touched && descriptionControl.hasError('required')) {
+              <small class="field__error">
+                La descripción es requerida.
+              </small>
+            } @else if (descriptionControl.touched && descriptionControl.hasError('blank')) {
+              <small class="field__error">
+                La descripción no puede contener solo espacios.
+              </small>
+            } @else if (descriptionControl.touched && descriptionControl.hasError('minlength')) {
+              <small class="field__error">
+                La descripción debe tener mínimo 10 caracteres.
+              </small>
+            } @else if (descriptionControl.touched && descriptionControl.hasError('maxlength')) {
+              <small class="field__error">
+                La descripción debe tener máximo 200 caracteres.
+              </small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="logo">Logo</label>
+
+            <input
+              id="logo"
+              type="url"
+              formControlName="logo"
+              placeholder="https://sitio.com/logo.png"
+            />
+
+            @if (logoControl.touched && logoControl.hasError('required')) {
+              <small class="field__error">El logo es requerido.</small>
+            } @else if (logoControl.touched && logoControl.hasError('blank')) {
+              <small class="field__error">
+                El logo no puede contener solo espacios.
+              </small>
+            } @else if (logoControl.touched && logoControl.hasError('invalidUrl')) {
+              <small class="field__error">
+                Ingresa una URL válida con http:// o https://.
+              </small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="date_release">Fecha de liberación</label>
+
+            <input
+              id="date_release"
+              type="date"
+              formControlName="date_release"
+              [min]="minReleaseDate"
+              (change)="onReleaseDateChange()"
+            />
+
+            @if (releaseDateControl.touched && releaseDateControl.hasError('required')) {
+              <small class="field__error">
+                La fecha de liberación es requerida.
+              </small>
+            } @else if (
+              releaseDateControl.touched &&
+              releaseDateControl.hasError('releaseDateInPast')
+            ) {
+              <small class="field__error">
+                La fecha debe ser igual o posterior a hoy.
+              </small>
+            }
+          </div>
+
+          <div class="field">
+            <label for="date_revision">Fecha de revisión</label>
+
+            <input
+              id="date_revision"
+              type="date"
+              formControlName="date_revision"
+              readonly
+            />
+
+            <small class="field__hint">
+              Se calcula automáticamente un año después de la fecha de liberación.
+            </small>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <button
+            class="secondary-button"
+            type="button"
+            [disabled]="isSubmitting()"
+            (click)="resetForm()"
+          >
+            {{ isEditMode() ? 'Restablecer' : 'Reiniciar' }}
+          </button>
+
+          <button
+            class="primary-button"
+            type="submit"
+            [disabled]="isSubmitting() || isCheckingId()"
+          >
+            {{ submitLabel() }}
+          </button>
+        </div>
+      </form>
+    }
+  </section>
+</main>
